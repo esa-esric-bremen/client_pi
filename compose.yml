@@ -1,0 +1,11 @@
+services:
+  client_pi:
+    image: harbor.hb.dfki.de/space-resources-challenge/client_pi_dev:arm64_001
+    # Setup for the real raspberry pi
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - "linux/arm64"
+    platform: "linux/arm64"
+    network_mode: host

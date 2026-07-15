@@ -1,0 +1,11 @@
+[Unit]
+Description=Start client
+After=network.target
+
+[Service]
+ExecStart=/home/bremen/client_pi/autostart.bash
+User=ubuntu
+
+[Install]
+WantedBy=multi-user.target
+

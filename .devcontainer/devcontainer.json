@@ -1,0 +1,16 @@
+{
+    "name": "Client Pi Development",
+    "workspaceFolder": "/app/client_pi",
+    "dockerComposeFile": "../compose-dev.yml",
+    "overrideCommand": true,
+    "service": "client_pi_dev",
+    "customizations":{
+        "vscode": {
+            "extensions": [
+                "bierner.github-markdown-preview",
+                "zxh404.vscode-proto3",
+                "ms-vscode.cmake-tools"
+            ]
+        }
+    }
+}

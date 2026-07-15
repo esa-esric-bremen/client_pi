@@ -1,0 +1,14 @@
+services:
+  client_pi_dev:
+    # Setup for the VS Code Dev container
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+    working_dir: /app
+    volumes:
+      - ./src:/app/client_pi/src:rw
+      - ./CMakeLists.txt:/app/client_pi/CMakeLists.txt:rw
+      - ./README.md:/app/client_pi/README.md:rw
+      - ./manifest.xml:/app/client_pi/manifest.xml:rw
+      - ./rebuild.bash:/app/client_pi/rebuild.bash
+    network_mode: host
