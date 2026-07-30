@@ -1,7 +1,7 @@
 # Client Pi
 C++ Client software that runs on the Raspberry Pi on the Beneficiation and Excavation systems for the Coyote3 robot.
 
-This development environment was developed at the [Robotics Innovation Center](http://robotik.dfki-bremen.de/en/startpage.html) of the [German Research Center for Artificial Intelligence (DFKI)](http://www.dfki.de) in Bremen.
+This Client application for RRC (Controlled Robot) was developed at the [Robotics Innovation Center](http://robotik.dfki-bremen.de/en/startpage.html) of the [German Research Center for Artificial Intelligence (DFKI)](http://www.dfki.de) in Bremen.
 
 See https://github.com/esa-esric-bremen/.github/ for more details, including a system overview.
 
