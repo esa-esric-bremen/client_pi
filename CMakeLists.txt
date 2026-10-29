@@ -32,7 +32,8 @@ endif()
 
 add_library(DummyDriver INTERFACE)
 target_sources(DummyDriver INTERFACE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/dummy.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/dummy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/sim_model.cpp)
 
 add_library(RaspberryPiDriver INTERFACE)
 target_sources(RaspberryPiDriver INTERFACE 
@@ -83,3 +84,16 @@ target_link_libraries(client_pi_main PRIVATE
     ${DRIVER_LIB}
 )
 
+
+# Simulated Coyote 3 rover, so the whole ground station can run without hardware
+if(SIMULATED)
+    add_executable(coyote_sim src/sim/coyote_sim.cpp)
+    target_link_libraries(coyote_sim PRIVATE
+        robot_remote_control-controlled_robot
+        robot_remote_control-types
+        robot_remote_control-update_thread
+        robot_remote_control-transport_zmq
+        protobuf
+        yaml-cpp
+    )
+endif()

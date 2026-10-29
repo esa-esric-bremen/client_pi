@@ -22,6 +22,7 @@
 #include "sensors/vcgencmd.hpp"
 #ifdef SIMULATED
 #include "driver/dummy.hpp"
+#include "driver/sim_model.hpp"
 #else
 #include "driver/gpio.hpp"
 #include "driver/hx711.hpp"
@@ -140,6 +141,7 @@ int main(int argc, char** argv)
     robot_remote_control::ControlledRobot robot(commands, telemetry);
 #ifdef SIMULATED
     std::cout << "WARNING: Using simulated Dummy driver for Development!" << std::endl;
+    sim_model().configure(config);
 #endif
     int value = 0;
 

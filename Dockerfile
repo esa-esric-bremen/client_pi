@@ -16,12 +16,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libreadline-dev \
         libncurses-dev \
         libopencv-dev \
+        libudt-dev \
+        libboost-program-options-dev \
         ca-certificates \
         gettext-base \
         fakeroot \
         libyaml-cpp-dev
-
-# libudt-dev does not exist for ARM64
 
 RUN mkdir -p /app/client_pi/thirdparty
 WORKDIR /app/client_pi/thirdparty

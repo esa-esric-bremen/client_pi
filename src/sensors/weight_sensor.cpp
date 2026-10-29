@@ -31,12 +31,16 @@ void WeightSensor::threaded_init() {
 
 double WeightSensor::get_value() {
     std::lock_guard<std::mutex> lock(data_mutex_);
+    fresh = false;
     return weight - this->calibration_weight;
 }
 
+// The reader thread owns the read interval (next_read_time); checking due() here
+// as well raced with it and dropped most readings.
 bool WeightSensor::ready(const TimePoint& now) {
+    (void) now;
     std::lock_guard<std::mutex> lock(data_mutex_);
-    return (this->runs_init >= this->runs_calibrate) && this->due(now);
+    return (this->runs_init >= this->runs_calibrate) && fresh;
 }
 
 void WeightSensor::threaded_update() {
@@ -61,6 +65,7 @@ void WeightSensor::threaded_update() {
             hx711_sensor->reset(); // power down and up
             std::lock_guard<std::mutex> lock(data_mutex_);
             weight = _weight;
+            fresh = true;
         }
     }
 }
