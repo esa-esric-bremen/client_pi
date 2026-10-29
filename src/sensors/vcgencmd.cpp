@@ -1,4 +1,7 @@
 #include "vcgencmd.hpp"
+#ifdef SIMULATED
+#include "../driver/dummy.hpp"
+#endif
 
 Vcgencmd::Vcgencmd(YAML::Node config)  : Sensor(config) {}
 
@@ -15,17 +18,14 @@ double Vcgencmd::get_value() {
         int throttled_value_int = std::stoul(hex_value_str, nullptr, 16);
         return throttled_value_int;
     }
-#endif
     return -1;
+#else
+    return get_throttled();
+#endif
 }
 
 bool Vcgencmd::ready(const TimePoint& now) {
-#ifdef SIMULATED
-    (void) now;
-    return false;
-#else
     return due(now);
-#endif
 }
 
 void Vcgencmd::update(const TimePoint& now) {

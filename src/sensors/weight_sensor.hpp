@@ -31,6 +31,8 @@ private:
     int runs_calibrate = 5;
     int runs_init = 0;
     double weight;
+    // set by the reader thread, cleared when the main loop takes the value
+    bool fresh = false;
     // from YAML
     int gpioPinDT;
     int gpioPinSCK;

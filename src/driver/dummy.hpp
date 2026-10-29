@@ -1,4 +1,5 @@
-// Dummy driver to provide random numbers for testing
+// Dummy driver for SIMULATED builds: same API as the hardware drivers, values come
+// from the excavation model in sim_model.hpp
 #pragma once
 #include <stdlib.h>
 #include <iostream>
@@ -6,8 +7,6 @@
 #include <cmath>
 #include <cstdint>
 #include "ina288_enums.h"
-
-int readRandom();
 
 // SENSORS
 // load cells
@@ -45,7 +44,8 @@ public:
   double getVoltage();
   double getCurrent();
 };
-// for temperature we use the real temperature sensor of the CPU
+// CPU temperature of the simulated Raspberry Pi (°C)
+double read_cpu_temperature();
 
 // raspberry pi vcgencmd
 int get_throttled();

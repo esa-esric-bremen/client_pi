@@ -1,4 +1,7 @@
 #include "cpu_temp.hpp"
+#ifdef SIMULATED
+#include "../driver/dummy.hpp"
+#endif
 
 CpuTemperature::CpuTemperature(YAML::Node config) : Sensor(config) {
     this->filename = config["filename"].as<std::string>();
@@ -9,6 +12,10 @@ void CpuTemperature::init() {
 }
 
 double CpuTemperature::get_value() {
+#ifdef SIMULATED
+    this->next_read_time += this->read_interval;
+    return read_cpu_temperature();
+#else
     std::ifstream tempFile(this->filename);
     if (!tempFile.is_open()) {
         std::cerr << "Failed to open temperature file." << std::endl;
@@ -20,7 +27,8 @@ double CpuTemperature::get_value() {
 
     this->next_read_time += this->read_interval;
 
-    return temp * this->scale;    
+    return temp * this->scale;
+#endif
 }
 
 bool CpuTemperature::ready(const TimePoint& now) {

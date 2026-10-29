@@ -65,6 +65,13 @@ All connected devices to the Raspberry Pi are controlled by [WiringPi](https://g
 ### Getting Started
 Deploy to the rasperry pi and build there or for simulation open this folder in code and build&run the devcontainer (also take a look at the `compose.yml`-file).
 
+### Simulation
+Built with `-DSIMULATED=ON` (default, see `Dockerfile-dev`), the client runs without additional hardware:
+- `client_pi_main <config.yaml>` uses the dummy drivers in `src/driver/dummy.cpp`, values come from the excavation model in `src/driver/sim_model.cpp`. Actuators are found by the commands of their actions (`excavator_speed`, `screw_speed`, `linear_motor_1`, `led_1`), sensors react to what the operator does.
+- `coyote_sim <config_coyote.yaml>` simulates the Coyote 3 rover (twist commands, LEDs, pose/velocity telemetry), so the ground station can be tested completely.
+
+`esa-src-docker-env` runs both as docker containers (`./run_sim.bash`).
+
 ### Hardwarde Notes
 Optionally, to improve performance, increase the I2C baudrate from the default of 100KHz to 400KHz by altering `/boot/config.txt` to include:
 
