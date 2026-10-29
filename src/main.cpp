@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
 #include <robot_remote_control/Transports/TransportZmq.hpp>
@@ -14,6 +15,9 @@
 #include "actions/action.hpp"
 #include "actions/motor_driver.hpp"
 #include "actions/gpio_driver.hpp"
+#include "actions/olimexino_actions.hpp"
+#include "driver/olimexino.hpp"
+#include "sensors/olimexino_sensor.hpp"
 #include "automation/automation.hpp"
 #include "sensors/weight_sensor.hpp"
 #include "sensors/sensor.hpp"
@@ -44,12 +48,26 @@ const int MOTOR_INIT_SLEEP = 5000000;
 const int LOOP_SLEEP =         50000;
 // wait 100ms to reconnect
 const int CONNECTION_SLEEP =  100000;
+// Commands from the relay wait for this update thread (ms), it also sets the command latency.
+const unsigned UPDATE_THREAD_MS = 10;
+// Heartbeats come every 1 s but can be delayed by a burst of commands in the relay;
+// only a heartbeat this much late (s) counts as a lost connection.
+const float HEARTBEAT_ALLOWED_LATENCY_S = 1.0;
 
+
+// board: the OLIMEXINO motor controller, null if the config has no olimexino section
+std::shared_ptr<Olimexino> require_board(const std::shared_ptr<Olimexino>& board, const std::string& what) {
+    if (!board) {
+        throw std::runtime_error(what + " needs an 'olimexino:' section in the config");
+    }
+    return board;
+}
 
 void init_drivers(
     YAML::Node config,
     std::map<std::string, std::shared_ptr<Action>>& actions,
-    std::map<std::string, std::shared_ptr<Sensor>>& sensors)
+    std::map<std::string, std::shared_ptr<Sensor>>& sensors,
+    const std::shared_ptr<Olimexino>& board)
 {
     std::cout << "initiate drivers:" << std::endl;
 #ifndef SIMULATED
@@ -69,6 +87,14 @@ void init_drivers(
             motor_driver->init();
             actions.emplace(cmd, motor_driver);
             any_gpio = true;
+        } else if (driver == "olimexino_ak80") {
+            auto ak = std::make_shared<AkSpeedAction>(action_conf, require_board(board, cmd));
+            ak->init();
+            actions.emplace(cmd, ak);
+        } else if (driver == "olimexino_ta70") {
+            auto ta = std::make_shared<TaPositionAction>(action_conf, require_board(board, cmd));
+            ta->init();
+            actions.emplace(cmd, ta);
         } else {
             std::cout << "Unknown action driver: " << driver << std::endl;
         }
@@ -102,6 +128,8 @@ void init_drivers(
         } else if (driver == "cpu_throttle" || driver == "vcgencmd") {
             auto vcg = std::make_shared<Vcgencmd>(sensor_conf);
             sensors.emplace(sensor_id, vcg);
+        } else if (driver == "olimexino") {
+            sensors.emplace(sensor_id, std::make_shared<OlimexinoSensor>(sensor_conf, require_board(board, sensor_id)));
         } else {
             std::cout << "Unknown sensor driver: " << driver << std::endl;
         }
@@ -143,14 +171,19 @@ int main(int argc, char** argv)
     std::cout << "WARNING: Using simulated Dummy driver for Development!" << std::endl;
     sim_model().configure(config);
 #endif
-    int value = 0;
+    // double: TA70 targets have decimals
+    double value = 0;
 
     // set a system name
     std::string system_name = config["system_name"].as<std::string>();
     robot.initRobotName(system_name); // RPiOnBeneficiation
     robot.setRobotState("INIT");
     
-    init_drivers(config, actions, sensors);
+    std::shared_ptr<Olimexino> board;
+    if (config["olimexino"]) {
+        board = make_olimexino(config["olimexino"]);
+    }
+    init_drivers(config, actions, sensors, board);
 
     // configure sensors
     robot_remote_control::SimpleSensor sensor;
@@ -196,7 +229,8 @@ int main(int argc, char** argv)
     */
 
     robot.initSimpleActions(simpleActions);
-    robot.startUpdateThread(100);
+    robot.setupDisconnectedCallback(HEARTBEAT_ALLOWED_LATENCY_S, nullptr);
+    robot.startUpdateThread(UPDATE_THREAD_MS);
 
     std::cout << "Waiting for connection..." << std::endl;
     while (!robot.isConnected()) {
@@ -205,9 +239,23 @@ int main(int argc, char** argv)
     std::cout << "Connection established!" << std::endl;
 
     robot_remote_control::SimpleAction simpleactionscommand;
+    bool connected = true;
 
     while (true) {
         robot.setRobotState("RUNNING");
+
+        // Without the ground station nobody can stop the motors: the board would keep
+        // the AK80 turning, so stop everything there (TA70 brake locks, needs init again).
+        const bool now_connected = robot.isConnected();
+        if (connected && !now_connected) {
+            std::cout << "Connection to the ground station lost" << std::endl;
+            if (board) {
+                board->send("stop all");
+            }
+        } else if (!connected && now_connected) {
+            std::cout << "Connection to the ground station restored" << std::endl;
+        }
+        connected = now_connected;
 
         while (robot.getSimpleActionCommand(&simpleactionscommand)) {
             value = simpleactionscommand.state();

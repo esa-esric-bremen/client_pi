@@ -65,6 +65,30 @@ All connected devices to the Raspberry Pi are controlled by [WiringPi](https://g
 ### Getting Started
 Deploy to the rasperry pi and build there or for simulation open this folder in code and build&run the devcontainer (also take a look at the `compose.yml`-file).
 
+### OLIMEXINO motor controller (CAN motors)
+The CubeMars AK80-6 and the SitoDrive TA70-100 are on CAN, driven by an OLIMEXINO-STM32F3
+(firmware in `firmware/olimexino`) that is connected to the Pi by USB serial. Configure it in
+the robot config:
+
+```yaml
+olimexino:
+  device: /dev/serial/by-id/usb-...   # or /dev/ttyACM0
+```
+
+The user running `client_pi` needs access to the port (`sudo usermod -aG dialout <user>`).
+
+| driver | config | behavior |
+|---|---|---|
+| `olimexino_ak80` (action) | `range` in ERPM (max +/-100000) | sends `ak <erpm>`; stop: 0 ERPM, init: 0 mA (no torque) |
+| `olimexino_ta70` (action) | `range` in deg (0..45), `speed_rpm`, `accel_rpm_s`, `current_ma` | keeps the latest target and resends it until the board confirms it (the firmware ignores targets during a move); init enters Profile Position Mode, never done automatically because it can release the brake; stop aborts (brake locks, init needed again) |
+| `olimexino` (sensor) | `channel`: a telemetry name (`AK_ActualERPM`, `AK_CurrentA`, `TA_ActualDeg`, ...) or `link` | `link` is 1 while telemetry arrives, a missing channel is not reported |
+
+Safety: the client sends `ping` every 250 ms and `stop all` when the ground station
+connection is lost. With the watchdog firmware the board stops everything by itself when
+the Pi stops talking (crash, cable). The connection to the board reconnects on its own.
+
+In SIMULATED builds a simulated board with the same command rules is used.
+
 ### Simulation
 Built with `-DSIMULATED=ON` (default, see `Dockerfile-dev`), the client runs without additional hardware:
 - `client_pi_main <config.yaml>` uses the dummy drivers in `src/driver/dummy.cpp`, values come from the excavation model in `src/driver/sim_model.cpp`. Actuators are found by the commands of their actions (`excavator_speed`, `screw_speed`, `linear_motor_1`, `led_1`), sensors react to what the operator does.

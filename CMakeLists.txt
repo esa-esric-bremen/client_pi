@@ -33,7 +33,8 @@ endif()
 add_library(DummyDriver INTERFACE)
 target_sources(DummyDriver INTERFACE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/dummy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/sim_model.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/sim_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/olimexino_sim.cpp)
 
 add_library(RaspberryPiDriver INTERFACE)
 target_sources(RaspberryPiDriver INTERFACE 
@@ -42,6 +43,7 @@ target_sources(RaspberryPiDriver INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/ina228.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/l298n.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/ads1x15.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/olimexino_serial.cpp
 )
 target_link_libraries(RaspberryPiDriver INTERFACE wiringPi)
 
@@ -53,11 +55,14 @@ set(APP_SOURCES
     src/main.cpp
     src/actions/motor_driver.cpp
     src/actions/gpio_driver.cpp
+    src/actions/olimexino_actions.cpp
     src/automation/automation.cpp
     src/automation/step.cpp
     src/automation/step_action.cpp
     src/automation/task.cpp
+    src/driver/olimexino.cpp
     src/sensors/cpu_temp.cpp
+    src/sensors/olimexino_sensor.cpp
     src/sensors/power_monitor.cpp
     src/sensors/sensor.cpp
     src/sensors/vcgencmd.cpp
